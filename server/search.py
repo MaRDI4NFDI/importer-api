@@ -1,10 +1,16 @@
 import sqlalchemy as db
+from sqlalchemy import and_, case
 import urllib.parse
-
 from .connection import create_engine
 
 def search_items(label):
     label = urllib.parse.unquote(label)
+    label = bytes(label, "utf-8")
+    is_truncated = False
+    if len(label) > 250:
+        label = label[:250]
+        is_truncated = True
+
     engine = create_engine()
     with engine.connect() as connection:
         metadata = db.MetaData()
@@ -25,7 +31,10 @@ def search_items(label):
                     .join(wbt_term_in_lang, wbt_item_terms.columns.wbit_term_in_lang_id == wbt_term_in_lang.columns.wbtl_id)
                     .join(wbt_text_in_lang, wbt_term_in_lang.columns.wbtl_text_in_lang_id == wbt_text_in_lang.columns.wbxl_id)
                     .join(wbt_text, wbt_text.columns.wbx_id == wbt_text_in_lang.columns.wbxl_text_id)
-                    .where(db.and_(wbt_text.columns.wbx_text == bytes(label, "utf-8"), 
+                    .where(db.and_(
+                                case(
+                                    (is_truncated, wbt_text.columns.wbx_text.like(label + b"%")),
+                                    else_=wbt_text.columns.wbx_text == label),
                                 wbt_term_in_lang.columns.wbtl_type_id == 1,
                                 wbt_text_in_lang.columns.wbxl_language == bytes("en", "utf-8"))))
             results = connection.execute(query).fetchall()
