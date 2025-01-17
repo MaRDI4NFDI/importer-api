@@ -1,4 +1,5 @@
 flask
+mariadb
 mysql-connector-python
 sqlalchemy
 uwsgi

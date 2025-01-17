@@ -3,9 +3,12 @@ FROM python:3.8-slim
 RUN apt-get clean \
     && apt-get -y update
 
-RUN apt-get -y install nginx \
-    && apt-get -y install python3-dev \
-    && apt-get -y install build-essential
+RUN apt-get -y install \
+    gcc \
+    nginx \
+    python3-dev \
+    build-essential \
+    libmariadb-dev
 
 WORKDIR /usr/src/app
 
