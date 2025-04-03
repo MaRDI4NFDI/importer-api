@@ -11,7 +11,7 @@ def search_items(label):
         label = label[:250]
         is_truncated = True
 
-    engine = create_engine()
+    engine = create_engine(mediawiki=True)
     with engine.connect() as connection:
         metadata = db.MetaData()
         try:
@@ -52,7 +52,7 @@ def search_items(label):
 
 def search_properties(label):
     label = urllib.parse.unquote(label)
-    engine = create_engine()
+    engine = create_engine(mediawiki=True)
     with engine.connect() as connection:
         metadata = db.MetaData()
         try:
