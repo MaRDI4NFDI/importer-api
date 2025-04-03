@@ -45,7 +45,7 @@ def get_wikidata_id(local_id):
     engine = create_engine()
     metadata = db.MetaData()
     table_name = 'items'
-    if wikidata_id.startswith('P'):
+    if local_id.startswith('P'):
         table_name = 'properties'
     table = db.Table(
         "wb_id_mapping", 
@@ -58,7 +58,7 @@ def get_wikidata_id(local_id):
     with engine.connect() as connection:
         db_result = connection.execute(sql).fetchone()
     if db_result:
-        if wikidata_id.startswith('Q'):
+        if local_id.startswith('Q'):
             return f"Q{db_result[0]}"
         else:
             return f"P{db_result[0]}"
