@@ -48,7 +48,7 @@ def get_wikidata_id(local_id):
     if local_id.startswith('P'):
         table_name = 'properties'
     table = db.Table(
-        "wb_id_mapping", 
+        table_name, 
         metadata, 
         autoload_with=engine
     )
