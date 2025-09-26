@@ -19,12 +19,12 @@ def get_property_mapping(property_id):
         return jsonify(mapping)
     return jsonify({'error': 'Property not found'})
 
-@app.route('/search/items/<label>')
+@app.route('/search/items/<path:label>')
 def get_items(label):
     results = search_items(label)
     return jsonify(results)
 
-@app.route('/search/properties/<label>')
+@app.route('/search/properties/<path:label>')
 def get_properties(label):
     results = search_properties(label)
     return jsonify(results)
