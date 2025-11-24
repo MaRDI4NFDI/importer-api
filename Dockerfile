@@ -1,26 +1,42 @@
-FROM python:3.8-slim
+FROM python:3.11-slim as builder
 
-RUN apt-get clean \
-    && apt-get -y update
+WORKDIR /app
 
-RUN apt-get -y install \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
-    nginx \
     python3-dev \
     build-essential \
-    libmariadb-dev
+    libmariadb-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /usr/src/app
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+# Runtime stage
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libmariadb3 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /root/.local /root/.local
 
 COPY server ./server
-COPY start.sh ./
-COPY requirements.txt ./
-COPY uwsgi.ini ./
+COPY wsgi.py .
+COPY gunicorn.conf.py .
 
-RUN pip install -r requirements.txt --src /usr/local/src
+ENV PATH=/root/.local/bin:$PATH
 
-COPY nginx.conf /etc/nginx
-RUN chmod +x ./start.sh
+# Create non-root user
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 
-EXPOSE 80
-CMD ["./start.sh"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=2)"
+
+EXPOSE 8000
+
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "wsgi:app"]
