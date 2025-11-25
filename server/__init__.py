@@ -23,12 +23,12 @@ def create_app():
     )
 
     app.config["SQLALCHEMY_DATABASE_URI"] = (
-        f"mariadb+mariadbconnector://{db_user}:{db_pass}@{db_host}/{db_name}"
+        f"mysql+pymysql://{db_user}:{db_pass}@{db_host}/{db_name}?charset=utf8mb4"
     )
 
     # Mediawiki database bind
     app.config["SQLALCHEMY_BINDS"] = {
-        "mediawiki": f"mariadb+mariadbconnector://{db_user}:{db_pass}@{db_host}/my_wiki"
+        "mediawiki": f"mysql+pymysql://{db_user}:{db_pass}@{db_host}/my_wiki?charset=utf8mb4"
     }
 
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
