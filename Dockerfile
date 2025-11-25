@@ -16,17 +16,16 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY --from=builder /root/.local /root/.local
+RUN useradd -m -u 1000 appuser
 
-COPY server ./server
-COPY wsgi.py .
-COPY gunicorn.conf.py .
+COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 
-ENV PATH=/root/.local/bin:$PATH
+COPY --chown=appuser:appuser server ./server
+COPY --chown=appuser:appuser wsgi.py .
+COPY --chown=appuser:appuser gunicorn.conf.py .
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
+ENV PATH=/home/appuser/.local/bin:$PATH
+
 USER appuser
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
