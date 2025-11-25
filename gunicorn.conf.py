@@ -28,10 +28,13 @@ loglevel = os.getenv("LOG_LEVEL", "info")
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
 
 
-# Disable access log for /health endpoint to reduce noise
-def on_starting(server):
-    """Called just before the master process is initialized"""
-    server.log.info(f"Starting Gunicorn {server.cfg.workers} workers")
+# Filter to exclude /health requests from access logs
+class HealthCheckFilter:
+    """Filter out /health requests from access logs"""
+
+    def __call__(self, record):
+        request_line = record.args.get("r", "")
+        return "/health" not in request_line
 
 
 # Process naming
@@ -49,6 +52,12 @@ tmp_upload_dir = None
 # Server hooks
 def on_starting(server):
     """Called just before the master process is initialized"""
+    import logging
+
+    # Apply filter to suppress health check logs
+    gunicorn_logger = logging.getLogger("gunicorn.access")
+    gunicorn_logger.addFilter(HealthCheckFilter())
+
     total_threads = server.cfg.workers * server.cfg.threads
     server.log.info(
         f"Starting Gunicorn: {server.cfg.workers} workers × "
