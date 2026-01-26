@@ -1,9 +1,14 @@
+import logging
 import os
 from flask import Flask, jsonify
 
 
 def create_app():
     app = Flask(__name__)
+
+    log_level_name = os.getenv("LOG_LEVEL", "debug").upper()
+    log_level = getattr(logging, log_level_name, logging.DEBUG)
+    app.logger.setLevel(log_level)
 
     db_user = os.environ["MYSQL_USER"]
     db_pass = os.environ["MYSQL_PASSWORD"]
