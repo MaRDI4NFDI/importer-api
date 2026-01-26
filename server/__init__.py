@@ -64,6 +64,7 @@ def register_routes(app):
         Health check endpoint for load balancers and monitoring
         Returns 200 if app and database are healthy
         """
+        app.logger.debug("Endpoint called: /health")
         try:
             from .database import db
 
@@ -71,6 +72,7 @@ def register_routes(app):
             with db.engine.connect() as conn:
                 conn.execute(db.text("SELECT 1"))
 
+            app.logger.debug("Health check result: healthy")
             return jsonify({"status": "healthy", "database": "connected"}), 200
         except Exception as e:
             app.logger.error(f"Health check failed: {e}")
@@ -79,10 +81,13 @@ def register_routes(app):
     @app.route("/items/<item_id>/mapping")
     def get_item_mapping(item_id):
         """Get mapping for an item by ID"""
+        app.logger.debug(f"Endpoint called: /items/{item_id}/mapping")
         try:
             mapping = get_mapping(item_id)
             if mapping:
+                app.logger.debug(f"Item mapping result: {mapping}")
                 return jsonify(mapping)
+            app.logger.debug("Item mapping result: not found")
             return jsonify({"error": "Item not found"}), 404
         except Exception as e:
             app.logger.error(f"Error getting item mapping: {e}")
@@ -91,10 +96,13 @@ def register_routes(app):
     @app.route("/properties/<property_id>/mapping")
     def get_property_mapping(property_id):
         """Get mapping for a property by ID"""
+        app.logger.debug(f"Endpoint called: /properties/{property_id}/mapping")
         try:
             mapping = get_mapping(property_id)
             if mapping:
+                app.logger.debug(f"Property mapping result: {mapping}")
                 return jsonify(mapping)
+            app.logger.debug("Property mapping result: not found")
             return jsonify({"error": "Property not found"}), 404
         except Exception as e:
             app.logger.error(f"Error getting property mapping: {e}")
@@ -103,8 +111,10 @@ def register_routes(app):
     @app.route("/search/items/<path:label>")
     def get_items(label):
         """Search for items by label"""
+        app.logger.debug(f"Endpoint called: /search/items/{label}")
         try:
             results = search_items(label)
+            app.logger.debug(f"Item search result: {results}")
             return jsonify(results)
         except Exception as e:
             app.logger.error(f"Error searching items: {e}")
@@ -113,8 +123,10 @@ def register_routes(app):
     @app.route("/search/properties/<path:label>")
     def get_properties(label):
         """Search for properties by label"""
+        app.logger.debug(f"Endpoint called: /search/properties/{label}")
         try:
             results = search_properties(label)
+            app.logger.debug(f"Property search result: {results}")
             return jsonify(results)
         except Exception as e:
             app.logger.error(f"Error searching properties: {e}")
