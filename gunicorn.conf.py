@@ -24,7 +24,7 @@ reload = os.getenv("GUNICORN_RELOAD", "false").lower() == "true"
 # Logging
 accesslog = "-"  # stdout
 errorlog = "-"  # stderr
-loglevel = os.getenv("LOG_LEVEL", "info")
+loglevel = os.getenv("LOG_LEVEL", "debug")
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
 
 
