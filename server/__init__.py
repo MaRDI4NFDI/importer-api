@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from flask import Flask, jsonify
 
 
@@ -62,6 +63,20 @@ def create_app():
     return app
 
 
+VALID_ITEM_ID_PATTERN = re.compile(r"^(wd:)?Q\d+$")
+VALID_PROPERTY_ID_PATTERN = re.compile(r"^(wdt:)?P\d+$")
+
+
+def is_valid_item_id(item_id: str) -> bool:
+    """Validate that item_id matches expected format (Q123 or wd:Q123)"""
+    return bool(VALID_ITEM_ID_PATTERN.match(item_id))
+
+
+def is_valid_property_id(property_id: str) -> bool:
+    """Validate that property_id matches expected format (P123 or wdt:P123)"""
+    return bool(VALID_PROPERTY_ID_PATTERN.match(property_id))
+
+
 def register_routes(app):
     """Register all application routes"""
     from .mapping import get_mapping
@@ -101,6 +116,13 @@ def register_routes(app):
     def get_item_mapping(item_id):
         """Get mapping for an item by ID"""
         app.logger.debug(f"Endpoint called: /items/{item_id}/mapping")
+
+        if not is_valid_item_id(item_id):
+            app.logger.warning(f"Invalid item_id format: {item_id}")
+            return jsonify(
+                {"error": "Invalid item ID format. Expected Q123 or wd:Q123"}
+            ), 400
+
         try:
             mapping = get_mapping(item_id)
             if mapping:
@@ -116,6 +138,13 @@ def register_routes(app):
     def get_property_mapping(property_id):
         """Get mapping for a property by ID"""
         app.logger.debug(f"Endpoint called: /properties/{property_id}/mapping")
+
+        if not is_valid_property_id(property_id):
+            app.logger.warning(f"Invalid property_id format: {property_id}")
+            return jsonify(
+                {"error": "Invalid property ID format. Expected P123 or wdt:P123"}
+            ), 400
+
         try:
             mapping = get_mapping(property_id)
             if mapping:
