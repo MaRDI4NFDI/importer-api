@@ -67,13 +67,23 @@ def register_routes(app):
     from .mapping import get_mapping
     from .search import search_items, search_properties
 
+    @app.route("/health/live")
+    def liveness_check():
+        """
+        Liveness probe endpoint.
+        Returns 200 if the application process is running.
+        Does NOT check external dependencies to avoid unnecessary restarts.
+        """
+        return jsonify({"status": "alive"}), 200
+
+    @app.route("/health/ready")
     @app.route("/health")
-    def health_check():
+    def readiness_check():
         """
-        Health check endpoint for load balancers and monitoring
-        Returns 200 if app and database are healthy
+        Readiness probe endpoint for monitoring.
+        Returns 200 if app and database are healthy.
         """
-        app.logger.debug("Endpoint called: /health")
+        app.logger.debug("Endpoint called: /health/ready")
         try:
             from .database import db
 
@@ -81,11 +91,11 @@ def register_routes(app):
             with db.engine.connect() as conn:
                 conn.execute(db.text("SELECT 1"))
 
-            app.logger.debug("Health check result: healthy")
-            return jsonify({"status": "healthy", "database": "connected"}), 200
+            app.logger.debug("Readiness check result: ready")
+            return jsonify({"status": "ready", "database": "connected"}), 200
         except Exception as e:
-            app.logger.error(f"Health check failed: {e}")
-            return jsonify({"status": "unhealthy", "error": str(e)}), 503
+            app.logger.error(f"Readiness check failed: {e}")
+            return jsonify({"status": "not_ready", "error": str(e)}), 503
 
     @app.route("/items/<item_id>/mapping")
     def get_item_mapping(item_id):
