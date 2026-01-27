@@ -19,8 +19,12 @@ def create_app():
     threads = int(os.getenv("GUNICORN_THREADS", 2))
 
     total_potential = workers * threads
-    pool_size = max(5, total_potential // 2)
-    max_overflow = pool_size
+
+    default_pool_size = max(5, total_potential // 2)
+    default_max_overflow = default_pool_size
+
+    pool_size = int(os.getenv("DB_POOL_SIZE", default_pool_size))
+    max_overflow = int(os.getenv("DB_MAX_OVERFLOW", default_max_overflow))
 
     app.logger.info(
         f"Configuring DB pools: workers={workers}, threads={threads}, "
@@ -37,8 +41,8 @@ def create_app():
     }
 
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-        "pool_size": 5,
-        "max_overflow": 10,
+        "pool_size": pool_size,
+        "max_overflow": max_overflow,
         "pool_pre_ping": True,
         "pool_recycle": 3600,
         "pool_timeout": 30,
