@@ -1,10 +1,13 @@
 import sqlalchemy as db
 from sqlalchemy import and_, case
 import urllib.parse
+import time
+from flask import current_app
 from .connection import get_engine, get_mediawiki_tables
 
 
 def search_items(label):
+    t_start = time.monotonic()
     label = urllib.parse.unquote(label)
     label = bytes(label, "utf-8")
     is_truncated = False
@@ -12,8 +15,15 @@ def search_items(label):
         label = label[:250]
         is_truncated = True
 
+    t0 = time.monotonic()
     engine = get_engine(mediawiki=True)
+    t1 = time.monotonic()
     tables = get_mediawiki_tables()
+    t2 = time.monotonic()
+    current_app.logger.info(
+        f"search_items setup: get_engine={t1-t0:.3f}s, get_tables={t2-t1:.3f}s"
+    )
+
     wbt_item_terms = tables["wbt_item_terms"]
     wbt_term_in_lang = tables["wbt_term_in_lang"]
     wbt_text_in_lang = tables["wbt_text_in_lang"]
@@ -23,7 +33,9 @@ def search_items(label):
         # field_type = 1 : Label
         # field_type = 2 : Alias
         # see: https://doc.wikimedia.org/Wikibase/REL1_41/php/docs_sql_wbt_type.html
+        tc0 = time.monotonic()
         with engine.connect() as connection:
+            tc1 = time.monotonic()
             try:
                 query = (
                     db.select(wbt_item_terms.columns.wbit_item_id)
@@ -57,7 +69,14 @@ def search_items(label):
                         )
                     )
                 )
+                tc2 = time.monotonic()
                 results = connection.execute(query).fetchall()
+                tc3 = time.monotonic()
+                current_app.logger.info(
+                    f"search_items field_type={field_type}: "
+                    f"connect={tc1-tc0:.3f}s, build_query={tc2-tc1:.3f}s, "
+                    f"execute={tc3-tc2:.3f}s, rows={len(results)}"
+                )
                 return [f"Q{str(result[0])}" for result in results]
             except Exception as e:
                 raise Exception(
@@ -66,6 +85,7 @@ def search_items(label):
 
     entity_id = query_wikidata_table(field_type=1)
     entity_id += query_wikidata_table(field_type=2)
+    current_app.logger.info(f"search_items total: {time.monotonic()-t_start:.3f}s")
     return {"QID": entity_id}
 
 
