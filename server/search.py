@@ -29,6 +29,11 @@ def search_items(label):
     wbt_text_in_lang = tables["wbt_text_in_lang"]
     wbt_text = tables["wbt_text"]
 
+    if is_truncated:
+        text_condition = wbt_text.columns.wbx_text.like(label + b"%")
+    else:
+        text_condition = (wbt_text.columns.wbx_text == label)
+
     def query_wikidata_table(field_type):
         # field_type = 1 : Label
         # field_type = 2 : Alias
@@ -56,13 +61,7 @@ def search_items(label):
                     )
                     .where(
                         and_(
-                            case(
-                                (
-                                    is_truncated,
-                                    wbt_text.columns.wbx_text.like(label + b"%"),
-                                ),
-                                else_=wbt_text.columns.wbx_text == label,
-                            ),
+                            text_condition,
                             wbt_term_in_lang.columns.wbtl_type_id == field_type,
                             wbt_text_in_lang.columns.wbxl_language
                             == bytes("en", "utf-8"),
