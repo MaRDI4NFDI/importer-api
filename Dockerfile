@@ -16,6 +16,11 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nano \
+    vim-tiny \
+    && rm -rf /var/lib/apt/lists/*
+    
 RUN useradd -m -u 1000 appuser
 
 COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
