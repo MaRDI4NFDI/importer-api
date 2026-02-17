@@ -1,7 +1,7 @@
 import sqlalchemy as db
 from sqlalchemy import and_, case
 import urllib.parse
-from .connection import get_engine
+from .connection import get_engine, get_mediawiki_tables
 
 
 def search_items(label):
@@ -13,24 +13,18 @@ def search_items(label):
         is_truncated = True
 
     engine = get_engine(mediawiki=True)
+    tables = get_mediawiki_tables()
+    wbt_item_terms = tables["wbt_item_terms"]
+    wbt_term_in_lang = tables["wbt_term_in_lang"]
+    wbt_text_in_lang = tables["wbt_text_in_lang"]
+    wbt_text = tables["wbt_text"]
 
     def query_wikidata_table(field_type):
         # field_type = 1 : Label
         # field_type = 2 : Alias
         # see: https://doc.wikimedia.org/Wikibase/REL1_41/php/docs_sql_wbt_type.html
         with engine.connect() as connection:
-            metadata = db.MetaData()
             try:
-                wbt_item_terms = db.Table(
-                    "wbt_item_terms", metadata, autoload_with=connection
-                )
-                wbt_term_in_lang = db.Table(
-                    "wbt_term_in_lang", metadata, autoload_with=connection
-                )
-                wbt_text_in_lang = db.Table(
-                    "wbt_text_in_lang", metadata, autoload_with=connection
-                )
-                wbt_text = db.Table("wbt_text", metadata, autoload_with=connection)
                 query = (
                     db.select(wbt_item_terms.columns.wbit_item_id)
                     .join(
@@ -78,19 +72,14 @@ def search_items(label):
 def search_properties(label):
     label = urllib.parse.unquote(label)
     engine = get_engine(mediawiki=True)
+    tables = get_mediawiki_tables()
+    wbt_property_terms = tables["wbt_property_terms"]
+    wbt_term_in_lang = tables["wbt_term_in_lang"]
+    wbt_text_in_lang = tables["wbt_text_in_lang"]
+    wbt_text = tables["wbt_text"]
+
     with engine.connect() as connection:
-        metadata = db.MetaData()
         try:
-            wbt_property_terms = db.Table(
-                "wbt_property_terms", metadata, autoload_with=connection
-            )
-            wbt_term_in_lang = db.Table(
-                "wbt_term_in_lang", metadata, autoload_with=connection
-            )
-            wbt_text_in_lang = db.Table(
-                "wbt_text_in_lang", metadata, autoload_with=connection
-            )
-            wbt_text = db.Table("wbt_text", metadata, autoload_with=connection)
             query = (
                 db.select(wbt_property_terms.columns.wbpt_property_id)
                 .join(
